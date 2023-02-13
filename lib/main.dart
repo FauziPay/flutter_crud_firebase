@@ -34,10 +34,14 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _priceController = TextEditingController();
 
   // make function future for update/create/view data dynamic
-  Future<void> _functionDynamic([DocumentSnapshot? documentSnapshot]) async {
-    String actionText;
-    if (documentSnapshot != null) {
+  Future<void> _functionDynamic(
+      [DocumentSnapshot? documentSnapshot, String? actionText]) async {
+    if (documentSnapshot != null && actionText == "Update") {
       actionText = "Update";
+      _nameController.text = documentSnapshot['name'];
+      _priceController.text = documentSnapshot['price'].toString();
+    } else if (documentSnapshot != null && actionText == "View") {
+      actionText = "View";
       _nameController.text = documentSnapshot['name'];
       _priceController.text = documentSnapshot['price'].toString();
     } else {
@@ -60,10 +64,12 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
+                    readOnly: actionText != "View" ? false : true,
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Name'),
                   ),
                   TextField(
+                    readOnly: actionText != "View" ? false : true,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     controller: _priceController,
@@ -74,41 +80,44 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(
                     height: 20,
                   ),
-                  ElevatedButton(
-                    onPressed: actionText == 'Create'
-                        ? () async {
-                            final String name = _nameController.text;
-                            final double? price =
-                                double.tryParse(_priceController.text);
-                            if (price != null) {
-                              await _products
-                                  .add({"name": name, "price": price});
+                  actionText != "View"
+                      ? ElevatedButton(
+                          onPressed: actionText == 'Create'
+                              ? () async {
+                                  final String name = _nameController.text;
+                                  final double? price =
+                                      double.tryParse(_priceController.text);
+                                  if (price != null) {
+                                    await _products
+                                        .add({"name": name, "price": price});
 
-                              _nameController.text = '';
-                              _priceController.text = '';
-                              // ignore: use_build_context_synchronously
-                              Navigator.pop(ctx);
-                            }
-                          }
-                        : actionText == 'Update'
-                            ? () async {
-                                final String name = _nameController.text;
-                                final double? price =
-                                    double.tryParse(_priceController.text);
-                                if (price != null) {
-                                  await _products
-                                      .doc(documentSnapshot!.id)
-                                      .update({"name": name, "price": price});
-
-                                  _nameController.text = '';
-                                  _priceController.text = '';
-                                  // ignore: use_build_context_synchronously
-                                  Navigator.pop(ctx);
+                                    _nameController.text = '';
+                                    _priceController.text = '';
+                                    // ignore: use_build_context_synchronously
+                                    Navigator.pop(ctx);
+                                  }
                                 }
-                              }
-                            : () {},
-                    child: Text(actionText),
-                  )
+                              : actionText == 'Update'
+                                  ? () async {
+                                      final String name = _nameController.text;
+                                      final double? price = double.tryParse(
+                                          _priceController.text);
+                                      if (price != null) {
+                                        await _products
+                                            .doc(documentSnapshot!.id)
+                                            .update(
+                                                {"name": name, "price": price});
+
+                                        _nameController.text = '';
+                                        _priceController.text = '';
+                                        // ignore: use_build_context_synchronously
+                                        Navigator.pop(ctx);
+                                      }
+                                    }
+                                  : () {},
+                          child: Text(actionText!),
+                        )
+                      : const SizedBox()
                 ],
               ),
             ),
@@ -121,12 +130,14 @@ class _HomePageState extends State<HomePage> {
   Future<void> _functionDelete(String productId) async {
     await _products.doc(productId).delete();
 
+    // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("You have successfully delete a data"),
       ),
     );
   }
+  // end
 
   @override
   Widget build(BuildContext context) {
@@ -167,17 +178,18 @@ class _HomePageState extends State<HomePage> {
                       child: Row(
                         children: [
                           IconButton(
-                            onPressed: () => _functionDynamic(documentSnapshot),
+                            onPressed: () =>
+                                _functionDynamic(documentSnapshot, "Update"),
                             icon: const Icon(Icons.edit),
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () =>
+                                _functionDynamic(documentSnapshot, "View"),
                             icon: const Icon(Icons.remove_red_eye),
                           ),
                           IconButton(
-                            onPressed: () {
-                              _functionDelete(documentSnapshot.id);
-                            },
+                            onPressed: () =>
+                                _functionDelete(documentSnapshot.id),
                             icon: const Icon(Icons.delete),
                           ),
                         ],
