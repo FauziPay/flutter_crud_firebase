@@ -34,8 +34,10 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _priceController = TextEditingController();
 
   // make function future for update/create/view data dynamic
-  Future<void> _functionDynamic(
-      [DocumentSnapshot? documentSnapshot, String? actionText]) async {
+  Future<void> _functionDynamic([
+    DocumentSnapshot? documentSnapshot,
+    String? actionText,
+  ]) async {
     if (documentSnapshot != null && actionText == "Update") {
       actionText = "Update";
       _nameController.text = documentSnapshot['name'];
@@ -46,6 +48,8 @@ class _HomePageState extends State<HomePage> {
       _priceController.text = documentSnapshot['price'].toString();
     } else {
       actionText = "Create";
+      _nameController.text = '';
+      _priceController.text = '';
     }
 
     await showModalBottomSheet(
